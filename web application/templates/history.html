@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #f0f8ff;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            background: #1b5e20;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+        .history-table th, .history-table td {
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .history-table th {
+            background-color: #43a047;
+            color: white;
+        }
+        .history-table td img {
+            width: 100px;
+            height: auto;
+        }
+        a {
+            text-decoration: none;
+            color: #1b5e20;
+            font-size: 1rem;
+            display: inline-block;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Upload History</h1>
+    <p>See your previous uploaded images, predictions, and fertilizer suggestions.</p>
+</div>
+
+<table class="history-table">
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Prediction</th>
+            <th>Fertilizer Recommendation</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in history %}
+            <tr>
+                <td><img src="{{ record[1] }}" alt="Image"></td>
+                <td>{{ record[2] }}</td>
+                <td>{{ record[3] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br>
+<a href="/" class="btn">Back to Home</a>
+
+</body>
+</html>

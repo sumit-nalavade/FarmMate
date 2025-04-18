@@ -3,9 +3,9 @@ from tensorflow.keras.models import load_model
 import numpy as np
 from PIL import Image
 from io import BytesIO
-import os   
+import os
 
-app = Flask(__name__,static_folder='web_application/static', static_url_path='/static')    
+app = Flask(__name__, static_folder='web_application/static', static_url_path='/static')
 
 # Load trained model
 MODEL_PATH = os.path.join('models', 'sugarcane_disease_model.h5')
@@ -13,6 +13,15 @@ model = load_model(MODEL_PATH)
 
 # Labels for prediction output
 labels = ["healthy", "mosaic", "redrot", "rust", "yellow"]
+
+# Fertilizer recommendations
+fertilizer_recommendations = {
+    "healthy": "No fertilizer needed. Crop is healthy!",
+    "mosaic": "Apply balanced NPK fertilizer and control virus spread.",
+    "redrot": "Use fungicide-treated fertilizers and improve soil drainage.",
+    "rust": "Apply sulfur-based fertilizers and rust-specific fungicides.",
+    "yellow": "Apply nitrogen-rich fertilizers to boost plant recovery."
+}
 
 # Uploads folder
 UPLOAD_FOLDER = 'static/uploads'
@@ -44,12 +53,15 @@ def predict():
         predicted_class = np.argmax(prediction, axis=1)
         result = labels[predicted_class[0]]
 
+        # Get fertilizer recommendation
+        fertilizer = fertilizer_recommendations.get(result, "No recommendation available.")
+
         # Save image for display
         img_file.stream.seek(0)  # Reset stream position
         saved_path = os.path.join(app.config['UPLOAD_FOLDER'], img_file.filename)
         img_file.save(saved_path)
 
-        return render_template('result.html', prediction=result, image_path=saved_path)
+        return render_template('result.html', prediction=result, fertilizer=fertilizer, image_path=saved_path)
 
     except Exception as e:
         return render_template('error.html', error=str(e))

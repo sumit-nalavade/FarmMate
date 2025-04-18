@@ -35,6 +35,12 @@
             color: #333;
         }
 
+        img {
+            margin: 1rem 0;
+            width: 100%;
+            border-radius: 10px;
+        }
+
         footer {
             margin-top: 2rem;
             font-size: 0.8rem;
@@ -61,7 +67,9 @@
 
 <div class="card">
     <h2>Prediction Result</h2>
+    <img src="{{ image_path }}" alt="Uploaded Image">
     <p><strong>Predicted Disease:</strong> {{ prediction }}</p>
+    <p><strong>Recommended Fertilizer:</strong> {{ fertilizer }}</p>
     <a href="/" class="btn">Upload Another Image</a>
     <footer>Made with ❤️ for Smart Farming</footer>
 </div>

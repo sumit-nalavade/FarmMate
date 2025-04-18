@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from tensorflow.keras.models import load_model
 import numpy as np
 from PIL import Image
 from io import BytesIO
 import os
 import sqlite3
-import requests  # <-- Added for Weather API
+import requests
+from datetime import datetime
 
 app = Flask(__name__, static_folder='web_application/static', static_url_path='/static')
 
@@ -47,29 +48,48 @@ def init_db():
 init_db()
 
 # --- WEATHER API FUNCTION ---
-def get_weather(lat, lon):
-    API_KEY = "YOUR_OPENWEATHERMAP_API_KEY"  # <-- Replace with your actual API key
-    url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+
+def get_weather_by_location(lat, lon):
+    API_KEY = "f858e2f4bf58da9aca0426006931940b"  # <-- Replace with your API key
+    url = f"http://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+    
     try:
         response = requests.get(url)
-        print(f"API response: {response.status_code}")  # Log the response status code
+        print(f"API response: {response.status_code}")
         data = response.json()
 
         if response.status_code != 200:
             print(f"Error fetching weather data: {data.get('message')}")
-            return {"temp": "N/A", "humidity": "N/A", "description": "N/A", "emergency": False}
+            return {"forecast": [], "emergency": False}
 
-        weather = {
-            "temp": data["main"]["temp"],
-            "humidity": data["main"]["humidity"],
-            "description": data["weather"][0]["description"],
-            "emergency": 'rain' in data["weather"][0]["description"].lower()  # Example emergency message
-        }
-        print(f"Weather data fetched: {weather}")  # Log fetched weather data
-        return weather
+        forecast_data = []
+        emergency = False
+        seen_dates = set()
+
+        for item in data['list']:
+            # Get the date for the forecast
+            forecast_date = datetime.utcfromtimestamp(item['dt']).strftime('%Y-%m-%d')
+            
+            # Only process the first data point for each date
+            if forecast_date not in seen_dates:
+                seen_dates.add(forecast_date)
+
+                day_forecast = {
+                    "date": forecast_date,
+                    "temp": item['main']['temp'],
+                    "humidity": item['main']['humidity'],
+                    "description": item['weather'][0]['description']
+                }
+
+                # Check if there is any heavy rain or high temperatures (emergency)
+                if 'rain' in item['weather'][0]["description"].lower() or item['main']['temp'] > 35:
+                    emergency = True
+                forecast_data.append(day_forecast)
+
+        return {"forecast": forecast_data, "emergency": emergency}
     except Exception as e:
         print(f"Error occurred: {e}")
-        return {"temp": "N/A", "humidity": "N/A", "description": "N/A", "emergency": False}
+        return {"forecast": [], "emergency": False}
 
 # --- ROUTES ---
 
@@ -82,8 +102,8 @@ def get_weather_api():
     data = request.get_json()
     lat = data.get('lat')
     lon = data.get('lon')
-    print(f"Received geolocation: Lat = {lat}, Lon = {lon}")  # Log received coordinates
-    weather = get_weather(lat, lon)
+    print(f"Received geolocation: Lat = {lat}, Lon = {lon}")
+    weather = get_weather_by_location(lat, lon)
     return jsonify(weather)
 
 @app.route('/predict', methods=['POST'])

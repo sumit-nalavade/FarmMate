@@ -45,6 +45,20 @@
         button:hover {
             background: #43a047;
         }
+        .emergency-alert {
+            color: red;
+            font-weight: bold;
+        }
+        .forecast {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .forecast p {
+            margin: 0.5rem 0;
+        }
+        .forecast .normal {
+            color: green;
+        }
     </style>
 </head>
 <body>
@@ -70,46 +84,68 @@
         <p id="emergency"></p>
     </div>
 
+    <!-- 5-day Weather Forecast -->
+    <div class="forecast" id="forecast">
+        <h3>5-Day Weather Forecast</h3>
+        <p id="forecastMessage">Loading forecast...</p>
+        <ul id="forecastList"></ul>
+    </div>
+
     <br>
     <a href="/history" class="btn">View Upload History</a>
 </div>
 
 <script>
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
+document.addEventListener('DOMContentLoaded', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
 
-        console.log(`Geolocation: Lat = ${lat}, Lon = ${lon}`);  // Log the geolocation data
+            console.log(`Geolocation: Lat = ${lat}, Lon = ${lon}`);
 
-        // Send the location data to the server to get weather info
-        fetch('/get_weather', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ lat: lat, lon: lon }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Weather Data:", data);  // Log the weather data received
-            document.getElementById("temp").textContent = data.temp;
-            document.getElementById("humidity").textContent = data.humidity;
-            document.getElementById("description").textContent = data.description;
+            fetch('/get_weather', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ lat: lat, lon: lon }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Weather Data:", data);
+                document.getElementById("temp").textContent = data.forecast[0]?.temp || "N/A";
+                document.getElementById("humidity").textContent = data.forecast[0]?.humidity || "N/A";
+                document.getElementById("description").textContent = data.forecast[0]?.description || "N/A";
 
-            if (data.emergency) {
-                document.getElementById("emergency").textContent = "Emergency: Rain expected!";
-            } else {
-                document.getElementById("emergency").textContent = "";
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching weather data:", error);
+                if (data.emergency) {
+                    document.getElementById("emergency").textContent = "⚠️ Emergency: Weather Alert! Immediate precautions needed.";
+                    document.getElementById("emergency").classList.add("emergency-alert");
+                } else {
+                    document.getElementById("emergency").textContent = "";
+                    document.getElementById("forecastMessage").textContent = "Weather conditions are normal. Monitoring ongoing for any potential risks.";
+                }
+
+                let forecastList = document.getElementById("forecastList");
+                forecastList.innerHTML = "";
+                data.forecast.forEach(function(day) {
+                    let forecastItem = document.createElement("li");
+                    forecastItem.textContent = `${day.date} - Temp: ${day.temp}°C, Humidity: ${day.humidity}% - ${day.description}`;
+                    forecastList.appendChild(forecastItem);
+                });
+
+            })
+            .catch(error => {
+                console.error("Error fetching weather data:", error);
+            });
+        }, function(error) {
+            console.error("Geolocation Error:", error);
+            alert("Failed to fetch location.");
         });
-    });
-} else {
-    alert("Geolocation is not supported by this browser.");
-}
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+});
 </script>
 
 </body>

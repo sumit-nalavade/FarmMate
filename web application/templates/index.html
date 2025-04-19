@@ -209,5 +209,58 @@
         }
     });
     </script>
+    <script>
+        // Auto-detect location and call API
+        function fetchWeatherData(lat, lon) {
+            fetch('/get_weather', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat: lat, lon: lon })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("temp").textContent = data.forecast[0]?.temp || 'N/A';
+                document.getElementById("humidity").textContent = data.forecast[0]?.humidity || 'N/A';
+                document.getElementById("description").textContent = data.forecast[0]?.description || 'N/A';
+    
+                if (data.emergency) {
+                    document.getElementById("emergency").textContent = "⚠️ Emergency weather alert! Take necessary precautions.";
+                    document.getElementById("emergency").classList.add("emergency-alert");
+                } else {
+                    document.getElementById("emergency").textContent = "";
+                    document.getElementById("emergency").classList.remove("emergency-alert");
+                }
+    
+                let forecastList = document.getElementById("forecastList");
+                forecastList.innerHTML = "";
+                data.forecast.forEach(day => {
+                    const li = document.createElement("li");
+                    li.textContent = `${day.date}: ${day.temp}°C, ${day.humidity}%, ${day.description}`;
+                    forecastList.appendChild(li);
+                });
+    
+                document.getElementById("forecastMessage").style.display = 'none';
+            })
+            .catch(error => {
+                console.error("Weather API error:", error);
+            });
+        }
+    
+        // Get current geolocation
+        window.onload = function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        fetchWeatherData(position.coords.latitude, position.coords.longitude);
+                    },
+                    error => {
+                        console.error("Geolocation error:", error.message);
+                    }
+                );
+            } else {
+                alert("Geolocation not supported by your browser.");
+            }
+        };
+    </script>    
 </body>
 </html>

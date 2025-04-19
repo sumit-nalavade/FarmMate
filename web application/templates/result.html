@@ -87,12 +87,50 @@
 
 <div class="card">
     <h2>Prediction Result</h2>
-    <img src="{{ image_path }}" alt="Uploaded Image">
-    <p><strong>Disease:</strong> {{ prediction }}</p>
-    <p><strong>Fertilizer Advice:</strong> {{ fertilizer }}</p>
+
+    <!-- Show Uploaded Image -->
+    <img src="{{ url_for('static', filename=image_path.split('static/')[-1]) }}" alt="Uploaded Image">
+
+    <!-- Prediction and Fertilizer Info -->
+    <p><strong>Disease:</strong> <span id="prediction">{{ prediction }}</span></p>
+    <p><strong>Fertilizer Advice:</strong> <span id="fertilizer">{{ fertilizer }}</span></p>
+
+    <!-- Upload Button -->
     <a href="/" class="btn">Upload Another</a>
+
     <footer>Helping Farmers Grow 🌱</footer>
 </div>
+
+<!-- JavaScript to Speak Result Automatically with Female Voice -->
+<script>
+    window.onload = function() {
+        const prediction = document.getElementById('prediction').innerText;
+        const fertilizer = document.getElementById('fertilizer').innerText;
+        const textToSpeak = `The disease prediction is ${prediction}. Recommended fertilizer advice is: ${fertilizer}.`;
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'en-US';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        speechSynthesis.onvoiceschanged = () => {
+            const voices = speechSynthesis.getVoices();
+            // Try to find a female voice
+            const femaleVoice = voices.find(voice =>
+                (voice.name.toLowerCase().includes('female') || 
+                voice.name.toLowerCase().includes('zira') || 
+                voice.name.toLowerCase().includes('samantha') || 
+                voice.name.toLowerCase().includes('google us english'))
+            ) || voices.find(voice => voice.lang === 'en-US'); // fallback
+
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+
+            speechSynthesis.speak(utterance);
+        };
+    }
+</script>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 from tensorflow.keras.models import load_model
 import numpy as np
 from PIL import Image
@@ -7,6 +7,7 @@ import os
 import sqlite3
 import requests
 from datetime import datetime
+from gtts import gTTS  # NEW IMPORT
 
 app = Flask(__name__, static_folder='web_application/static', static_url_path='/static')
 
@@ -31,7 +32,12 @@ UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# --- DATABASE SETUP ---
+# Sound folder
+SOUND_FOLDER = 'static/sounds'
+os.makedirs(SOUND_FOLDER, exist_ok=True)
+app.config['SOUND_FOLDER'] = SOUND_FOLDER
+
+# Database setup
 DATABASE = 'history.db'
 
 def init_db():
@@ -47,10 +53,9 @@ def init_db():
 
 init_db()
 
-# --- WEATHER API FUNCTION ---
-
+# Weather API
 def get_weather_by_location(lat, lon):
-    API_KEY = "f858e2f4bf58da9aca0426006931940b"  # <-- Replace with your API key
+    API_KEY = "f858e2f4bf58da9aca0426006931940b"  # <-- Replace with your real API key
     url = f"http://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
     
     try:
@@ -67,21 +72,15 @@ def get_weather_by_location(lat, lon):
         seen_dates = set()
 
         for item in data['list']:
-            # Get the date for the forecast
             forecast_date = datetime.utcfromtimestamp(item['dt']).strftime('%Y-%m-%d')
-            
-            # Only process the first data point for each date
             if forecast_date not in seen_dates:
                 seen_dates.add(forecast_date)
-
                 day_forecast = {
                     "date": forecast_date,
                     "temp": item['main']['temp'],
                     "humidity": item['main']['humidity'],
                     "description": item['weather'][0]['description']
                 }
-
-                # Check if there is any heavy rain or high temperatures (emergency)
                 if 'rain' in item['weather'][0]["description"].lower() or item['main']['temp'] > 35:
                     emergency = True
                 forecast_data.append(day_forecast)
@@ -91,8 +90,14 @@ def get_weather_by_location(lat, lon):
         print(f"Error occurred: {e}")
         return {"forecast": [], "emergency": False}
 
-# --- ROUTES ---
+# NEW FUNCTION: generate gTTS sound
+def generate_sound(text, filename):
+    tts = gTTS(text=text, lang='en')
+    filepath = os.path.join(app.config['SOUND_FOLDER'], filename)
+    tts.save(filepath)
+    return filepath
 
+# ROUTES
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -105,6 +110,21 @@ def get_weather_api():
     print(f"Received geolocation: Lat = {lat}, Lon = {lon}")
     weather = get_weather_by_location(lat, lon)
     return jsonify(weather)
+
+@app.route('/get_market', methods=['POST'])
+def get_market_api():
+    data = request.get_json()
+    lat = data.get('lat')
+    lon = data.get('lon')
+
+    # Mock data (later can replace by real API call)
+    markets = [
+        {"name": "Green Valley Mandi", "distance_km": 5.2},
+        {"name": "Sunrise Farmers Market", "distance_km": 8.5},
+        {"name": "AgroFresh Wholesale", "distance_km": 12.0},
+    ]
+
+    return jsonify({"markets": markets})
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -127,15 +147,13 @@ def predict():
         predicted_class = np.argmax(prediction, axis=1)
         result = labels[predicted_class[0]]
 
-        # Get fertilizer recommendation
         fertilizer = fertilizer_recommendations.get(result, "No recommendation available.")
 
-        # Save image
         img_file.stream.seek(0)
         saved_path = os.path.join(app.config['UPLOAD_FOLDER'], img_file.filename)
         img_file.save(saved_path)
 
-        # Save to Database
+        # Save to database
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
         c.execute('INSERT INTO history (image_path, prediction, fertilizer) VALUES (?, ?, ?)',
@@ -143,7 +161,12 @@ def predict():
         conn.commit()
         conn.close()
 
-        return render_template('result.html', prediction=result, fertilizer=fertilizer, image_path=saved_path)
+        # Create voice file
+        speech_text = f"The disease prediction is {result}. Recommended action: {fertilizer}."
+        sound_filename = img_file.filename.rsplit('.', 1)[0] + '.mp3'
+        generate_sound(speech_text, sound_filename)
+
+        return render_template('result.html', prediction=result, fertilizer=fertilizer, image_path=saved_path, sound_file=sound_filename)
 
     except Exception as e:
         return render_template('error.html', error=str(e))
@@ -157,5 +180,9 @@ def history():
     conn.close()
     return render_template('history.html', history=data)
 
+@app.route('/static/sounds/<path:filename>')
+def download_sound(filename):
+    return send_from_directory(app.config['SOUND_FOLDER'], filename)
+    
 if __name__ == '__main__':
     app.run(debug=True)

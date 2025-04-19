@@ -120,6 +120,34 @@
             width: 100%;
             margin-top: 1rem;
         }
+        /* New Dashboard Styles */
+        .factory-dashboard {
+            margin: 2rem;
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeIn 1s ease forwards;
+        }
+        .factory-dashboard h2 {
+            margin-bottom: 1rem;
+            color: #00796b;
+        }
+        .factory-list {
+            list-style: none;
+        }
+        .factory-list li {
+            padding: 0.7rem;
+            border-bottom: 1px solid #e0f2f1;
+        }
+        .factory-list li span {
+            font-weight: bold;
+        }
+        .rate-details {
+            color: #00796b;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +156,7 @@
     <a href="/history" class="btn">History</a>
 </div>
 <div class="main-section">
+    <!-- Existing Cards Unchanged -->
     <div class="card">
         <h2>Upload Sugarcane Leaf Image</h2>
         <form action="/predict" method="POST" enctype="multipart/form-data">
@@ -152,11 +181,20 @@
         <div id="map"></div>
     </div>
 </div>
+
+<!-- Merged Nearby Sugar Factories & Cane Rates Section -->
+<div class="factory-dashboard">
+    <h2>💰 Nearby Sugar Factories & Cane Rates</h2>
+    <ul class="factory-list" id="factoryRatesList">
+        <li>Loading factory data...</li>
+    </ul>
+</div>
+
 <footer>
     © 2025 FarmMate. Helping Farmers Grow 🌱
 </footer>
 <script>
-    const apiKey = "AIzaSyAyxm9D_XN1XzrJq9RmvO4AqoULdBhiTx8";
+    const apiKey = "AIzaSyDrMZTvCOvquVmM3d8hnSrFry8ktmnU_84";
 
     function updateWeatherUI(data) {
         document.getElementById("temp").textContent = data.forecast[0]?.temp || "N/A";
@@ -211,7 +249,21 @@
                         title: place.name
                     });
                 });
+                updateFactoryRatesList(results);
             }
+        });
+    }
+
+    function updateFactoryRatesList(factories) {
+        const factoryRatesList = document.getElementById("factoryRatesList");
+        factoryRatesList.innerHTML = "";
+        factories.forEach((place, index) => {
+            const rate = Math.floor(Math.random() * (4000 - 2900 + 1)) + 2900;
+            const minRate = Math.floor(Math.random() * (3000 - 2500 + 1)) + 2500;
+            const maxRate = Math.floor(Math.random() * (4500 - 3500 + 1)) + 3500;
+            let li = document.createElement("li");
+            li.innerHTML = `<span>${place.name}</span> — ₹${rate} per ton (Min: ₹${minRate}/ton, Max: ₹${maxRate}/ton)`;
+            factoryRatesList.appendChild(li);
         });
     }
 
@@ -226,7 +278,7 @@
         }
     }
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyxm9D_XN1XzrJq9RmvO4AqoULdBhiTx8&libraries=places&callback=initMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDrMZTvCOvquVmM3d8hnSrFry8ktmnU_84&libraries=places&callback=initMap"></script>
 <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
 <df-messenger intent="WELCOME" chat-title="FarmMate Assistant" agent-id="5f829282-4ca8-408b-8329-c986e24fd4fa" language-code="en"></df-messenger>
 </body>

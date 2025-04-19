@@ -159,6 +159,20 @@ def predict():
         c.execute('INSERT INTO history (image_path, prediction, fertilizer) VALUES (?, ?, ?)',
                   (saved_path, result, fertilizer))
         conn.commit()
+
+        # Check if we have more than 10 records, and if so, delete the oldest one
+        c.execute('SELECT COUNT(*) FROM history')
+        count = c.fetchone()[0]
+        print(f"Number of records before deletion: {count}")
+        
+        if count > 10:
+            c.execute('DELETE FROM history WHERE id = (SELECT MIN(id) FROM history)')
+            conn.commit()
+
+        c.execute('SELECT COUNT(*) FROM history')
+        count_after_deletion = c.fetchone()[0]
+        print(f"Number of records after deletion: {count_after_deletion}")
+
         conn.close()
 
         # Create voice file
@@ -183,6 +197,6 @@ def history():
 @app.route('/static/sounds/<path:filename>')
 def download_sound(filename):
     return send_from_directory(app.config['SOUND_FOLDER'], filename)
-    
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -11,37 +11,101 @@
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 2rem;
+            animation: fadeIn 1.2s ease forwards;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .header {
             background: #1b5e20;
             color: white;
             padding: 1rem;
             text-align: center;
+            border-radius: 14px;
+            animation: slideDown 0.8s ease forwards;
         }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         .history-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 2rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
+
         .history-table th, .history-table td {
             padding: 1rem;
             text-align: center;
             border: 1px solid #ddd;
+            transition: background-color 0.3s ease;
         }
+
         .history-table th {
             background-color: #43a047;
             color: white;
         }
+
+        .history-table tr:hover td {
+            background-color: #e8f5e9;
+            transform: scale(1.01);
+        }
+
         .history-table td img {
             width: 100px;
             height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            animation: fadeImage 0.8s ease forwards;
         }
-        a {
+
+        @keyframes fadeImage {
+            to { opacity: 1; }
+        }
+
+        a.btn {
+            background: #1b5e20;
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
             text-decoration: none;
-            color: #1b5e20;
-            font-size: 1rem;
             display: inline-block;
+            transition: all 0.3s ease;
             margin-top: 2rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+
+        a.btn:hover {
+            background: #2e7d32;
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .no-history {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            color: #ff5722;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        @media (max-width: 600px) {
+            .history-table td img {
+                width: 80px;
+            }
+            .history-table th, .history-table td {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -52,26 +116,31 @@
     <p>See your previous uploaded images, predictions, and fertilizer suggestions.</p>
 </div>
 
-<table class="history-table">
-    <thead>
-        <tr>
-            <th>Image</th>
-            <th>Prediction</th>
-            <th>Fertilizer Recommendation</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for record in history %}
+{% if history %}
+    <table class="history-table">
+        <thead>
             <tr>
-                <td><img src="{{ record[1] }}" alt="Image"></td>
-                <td>{{ record[2] }}</td>
-                <td>{{ record[3] }}</td>
+                <th>Image</th>
+                <th>Prediction</th>
+                <th>Fertilizer Recommendation</th>
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            {% for record in history %}
+                <tr>
+                    <td><img src="{{ record[1] }}" alt="Image"></td>
+                    <td>{{ record[2] }}</td>
+                    <td>{{ record[3] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="no-history">
+        <p>No history available. Upload your first image to see predictions and recommendations.</p>
+    </div>
+{% endif %}
 
-<br>
 <a href="/" class="btn">Back to Home</a>
 
 </body>

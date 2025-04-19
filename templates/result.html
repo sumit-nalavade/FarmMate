@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmMate | Prediction Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0f7fa, #a5d6a7);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeBackground 1.5s ease forwards;
+        }
+
+        @keyframes fadeBackground {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2e7d32;
+            animation: slideInTop 1s ease forwards;
+        }
+
+        @keyframes slideInTop {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 400px;
+            transform: scale(0.8);
+            animation: zoomIn 0.8s ease forwards;
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.6); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            color: #1b5e20;
+            margin-bottom: 1rem;
+            animation: fadeInText 1s ease forwards;
+        }
+
+        @keyframes fadeInText {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        img {
+            width: 100%;
+            margin: 1rem 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            animation: floatImage 3s ease-in-out infinite alternate, fadeInImage 1.2s ease forwards;
+        }
+
+        @keyframes fadeInImage {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes floatImage {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin: 0.5rem 0;
+            color: #333;
+            opacity: 0;
+            animation: fadeInText 1s ease forwards;
+            animation-delay: 1s;
+            animation-fill-mode: forwards;
+        }
+
+        .btn {
+            background: #2e7d32;
+            color: white;
+            padding: 0.7rem 2rem;
+            margin-top: 1rem;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInText 1s ease forwards;
+            animation-delay: 1.3s;
+            animation-fill-mode: forwards;
+        }
+
+        .btn:hover {
+            background: #66bb6a;
+            transform: scale(1.05);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        }
+
+        footer {
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: gray;
+            opacity: 0;
+            animation: fadeInText 1s ease forwards;
+            animation-delay: 1.6s;
+            animation-fill-mode: forwards;
+        }
+
+        @media (max-width: 450px) {
+            .card {
+                width: 90%;
+                padding: 1.5rem;
+            }
+
+            .header {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">🌾 FarmMate</div>
+
+<div class="card">
+    <h2>Prediction Result</h2>
+
+    <!-- Show Uploaded Image -->
+    <img src="{{ url_for('static', filename=image_path.split('static/')[-1]) }}" alt="Uploaded Image">
+
+    <!-- Prediction and Fertilizer Info -->
+    <p><strong>Disease:</strong> <span id="prediction">{{ prediction }}</span></p>
+    <p><strong>Fertilizer Advice:</strong> <span id="fertilizer">{{ fertilizer }}</span></p>
+
+    <!-- Upload Button -->
+    <a href="/" class="btn">Upload Another</a>
+
+    <footer>Helping Farmers Grow 🌱</footer>
+</div>
+
+<!-- JavaScript to Speak Result Automatically with Female Voice -->
+<script>
+    window.onload = function() {
+        const prediction = document.getElementById('prediction').innerText;
+        const fertilizer = document.getElementById('fertilizer').innerText;
+        const textToSpeak = `The disease prediction is ${prediction}. Recommended fertilizer advice is: ${fertilizer}.`;
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'en-US';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        speechSynthesis.onvoiceschanged = () => {
+            const voices = speechSynthesis.getVoices();
+            const femaleVoice = voices.find(voice =>
+                (voice.name.toLowerCase().includes('female') || 
+                 voice.name.toLowerCase().includes('zira') || 
+                 voice.name.toLowerCase().includes('samantha') || 
+                 voice.name.toLowerCase().includes('google us english'))
+            ) || voices.find(voice => voice.lang === 'en-US');
+
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+
+            speechSynthesis.speak(utterance);
+        };
+    }
+</script>
+
+</body>
+</html>
